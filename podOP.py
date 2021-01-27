@@ -45,41 +45,43 @@ with models.DAG(
     # credentials for Cloud Composer's Google Kubernetes Engine cluster that is
     # created upon environment creation.
 
-    kubernetes_min_pod = kubernetes_pod_operator.KubernetesPodOperator(
+    afe = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id='ex-kube-templates',
+        name='auto-feature-engineering',
+        namespace='default',
+        image='automl.afe:latest',
+        cmds=['echo', 'AFE'])
+    pps = kubernetes_pod_operator.KubernetesPodOperator(
         # The ID specified for the task.
         task_id='pod-ex-minimum',
         # Name of task you want to run, used to generate Pod ID.
-        name='pod-ex-minimum',
+        name='preprocessing',
         # Entrypoint of the container, if not specified the Docker container's
         # entrypoint is used. The cmds parameter is templated.
-        cmds=['echo'],
-        # The namespace to run within Kubernetes, default namespace is
-        # `default`. There is the potential for the resource starvation of
-        # Airflow workers and scheduler within the Cloud Composer environment,
-        # the recommended solution is to increase the amount of nodes in order
-        # to satisfy the computing requirements. Alternatively, launching pods
-        # into a custom namespace will stop fighting over resources.
+        cmds=['echo','PPS'],
         namespace='default',
-        # Docker image specified. Defaults to hub.docker.com, but any fully
-        # qualified URLs will point to a custom repository. Supports private
-        # gcr.io images if the Composer Environment is under the same
-        # project-id as the gcr.io images and the service account that Composer
-        # uses has permission to access the Google Container Registry
-        # (the default service account has permission)
-        image='automl.trn:latest')
-    kubenetes_template_ex = kubernetes_pod_operator.KubernetesPodOperator(
+        image='automl.pps:latest')
+    trn_1 = kubernetes_pod_operator.KubernetesPodOperator(
         task_id='ex-kube-templates',
-        name='ex-kube-templates',
+        name='train-models(GBM)',
+        namespace='default',
+        image='automl.trn:latest',
+        cmds=['echo', 'TRN_1'])
+    trn_2 = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id='ex-kube-templates',
+        name='train-models(TENSORFLOW)',
+        namespace='default',
+        image='automl.trn:latest',
+        cmds=['echo', 'TRN_2'])        
+    sel = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id='ex-kube-secrets',
+        name='select-best-model',
         namespace='default',
         image='automl.sel:latest',
-        cmds=['echo', 'haha'])
-    kubernetes_secret_vars_ex = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id='ex-kube-secrets',
-        name='ex-kube-secrets',
-        namespace='default',
-        image='automl.pps:latest',
-        cmds=['echo', '$EXAMPLE_VAR'],
+        cmds=['echo', '$\{EXAMPLE_VAR\}'],
         env_vars={
             'EXAMPLE_VAR': '/example/value',
             'GOOGLE_APPLICATION_CREDENTIALS': '/var/secrets/google/service-account.json'})
+
+    afe >> pps >> [trn_1, trn_2] >> sel
 
