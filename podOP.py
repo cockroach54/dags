@@ -62,13 +62,13 @@ with models.DAG(
         namespace='default',
         image='automl.pps:latest')
     trn_1 = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id='ex-kube-templates',
+        task_id='ex-kube-templates-gbm',
         name='train-models__GBM__',
         namespace='default',
         image='automl.trn:latest',
         cmds=['echo', 'TRN_1'])
     trn_2 = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id='ex-kube-templates',
+        task_id='ex-kube-templates-tf',
         name='train-models__TENSORFLOW__',
         namespace='default',
         image='automl.trn:latest',
