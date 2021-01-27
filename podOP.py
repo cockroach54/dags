@@ -46,14 +46,14 @@ with models.DAG(
     # created upon environment creation.
 
     afe = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id='ex-kube-templates',
-        name='auto-feature-engineering',
+        task_id='auto-feature-engineering',  # airflow task id
+        name='auto-feature-engineering',  # k8s pod name
         namespace='default',
         image='automl.afe:latest',
         cmds=['echo', 'AFE'])
     pps = kubernetes_pod_operator.KubernetesPodOperator(
         # The ID specified for the task.
-        task_id='pod-ex-minimum',
+        task_id='preprocessing',
         # Name of task you want to run, used to generate Pod ID.
         name='preprocessing',
         # Entrypoint of the container, if not specified the Docker container's
@@ -62,19 +62,25 @@ with models.DAG(
         namespace='default',
         image='automl.pps:latest')
     trn_1 = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id='ex-kube-templates-gbm',
-        name='train-models__GBM__',
+        task_id='train-models__SVM__',
+        name='train-models__SVM__',
         namespace='default',
         image='automl.trn:latest',
         cmds=['echo', 'TRN_1'])
     trn_2 = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id='ex-kube-templates-tf',
+        task_id='train-models__TENSORFLOW__',
         name='train-models__TENSORFLOW__',
         namespace='default',
         image='automl.trn:latest',
-        cmds=['echo', 'TRN_2'])        
+        cmds=['echo', 'TRN_2'])     
+    trn_3 = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id='train-models__LIGHTGBM__',
+        name='train-models__LIGHTGBM__',
+        namespace='default',
+        image='automl.trn:latest',
+        cmds=['echo', 'TRN_3'])                
     sel = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id='ex-kube-secrets',
+        task_id='select-best-model',
         name='select-best-model',
         namespace='default',
         image='automl.sel:latest',
@@ -83,5 +89,5 @@ with models.DAG(
             'EXAMPLE_VAR': '/example/value',
             'GOOGLE_APPLICATION_CREDENTIALS': '/var/secrets/google/service-account.json'})
 
-    afe >> pps >> [trn_1, trn_2] >> sel
+    afe >> pps >> [trn_1, trn_2, trn_3] >> sel
 
