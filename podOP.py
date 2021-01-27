@@ -66,21 +66,20 @@ with models.DAG(
         # project-id as the gcr.io images and the service account that Composer
         # uses has permission to access the Google Container Registry
         # (the default service account has permission)
-        image='automl.trm:latest')
+        image='automl.trn:latest')
     kubenetes_template_ex = kubernetes_pod_operator.KubernetesPodOperator(
         task_id='ex-kube-templates',
         name='ex-kube-templates',
         namespace='default',
-        image='automl.trm:latest'
+        image='automl.sel:latest',
         cmds=['echo', 'haha'])
     kubernetes_secret_vars_ex = kubernetes_pod_operator.KubernetesPodOperator(
         task_id='ex-kube-secrets',
         name='ex-kube-secrets',
         namespace='default',
-        image='automl.trm:latest'
+        image='automl.pps:latest',
         cmds=['echo', '$EXAMPLE_VAR'],
         env_vars={
             'EXAMPLE_VAR': '/example/value',
             'GOOGLE_APPLICATION_CREDENTIALS': '/var/secrets/google/service-account.json'})
 
-            
